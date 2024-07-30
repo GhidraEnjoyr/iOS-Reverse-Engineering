@@ -118,10 +118,9 @@ The first topic we'll cover is the file format of the executables/libraries on i
 
 While I could spend hours covering the topic of IPCs, I believe that some mechanisms are more prevelant than others when it comes to iOS. I strongly recommend getting familiar with this part of the guide as this will be core knowledge for quite a while during your future reversing projects.
 
-
 #### Mach IPC
 
-Not to be confused with the [Mach microkernel](https://en.wikipedia.org/wiki/Mach_(kernel)), the first IPC mechanism to cover is Mach IPC, which is arguably the single most important IPC used in iOS. In any case, the reason this IPC is important is because a lot of IPC calls are done via `mach_sendmsg` calls to the Frameworks bundled into a file called the dyld cache (I've spent a lot of time looking at this cache, hence my twitter handle [@b1n_c4ch3](https://twitter.com/b1n_C4CH3)).
+Not to be confused with the [Mach microkernel](https://en.wikipedia.org/wiki/Mach_(kernel)), the first IPC mechanism to cover is Mach IPC, which is arguably the single most important IPC used in iOS. In any case, the reason this IPC is important is because a lot of IPC calls are done via `mach_sendmsg` calls to the Frameworks bundled into a file called the dyld cache.
 
 A lot of information can be found on the Mach IPC, and I strongly recommend looking into these are they're extremely common to encounter its APIs when reverse engineering on iOS.
 
