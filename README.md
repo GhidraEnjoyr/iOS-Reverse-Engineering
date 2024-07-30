@@ -1,4 +1,4 @@
-
+# iOS Reverse Engineering
 
 ## Table of Contents
 
@@ -61,6 +61,8 @@
 ## Disclaimer
 
 Before you start reading, just know the goal of this guide is purely educational and this was done in my spare time. This guide is not an end-all-be-all to reverse engineering and I strongly encourage you to find the techniques that work best for you. This is also a bit dated, a lot of the tools used have a better alternative [ipsw](https://github.com/blacktop/ipsw) which I strongly recommend you look into.
+
+If you're interested, you can follow me on Twitter [@ghidra_enjoyer](twitter.com/ghidra_enjoyer), I might revisit this guide using more recent information.
 
 ## Introduction
 
