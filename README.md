@@ -77,9 +77,10 @@ Furthermore, the purpose of this guide is intended to be used by beginners to ge
 ## Prerequisites
 
 The prerequisites for this guide are quite simple really, you'll need the following:
-1. An Internet Connection;
+
+1. An Internet Connection.
 2. A computer with macOS or Linux (I'll be using Ubuntu in this guide) installed.
-3. Familiarity with the C programming language. 
+3. Familiarity with the C programming language.
 
 ### Optional Prerequisites
 
@@ -87,6 +88,7 @@ The prerequisites for this guide are quite simple really, you'll need the follow
   1. [checkra1n](https://checkra.in/) iPhone 5s to iPhone X on iOS 12.0 and up (recommended, tend to have support first on new version)
   2. [unc0ver](https://unc0ver.dev/) iPhone SE to iPhone 12(s) on iOS 11.0-14.3 (wide net range) (There's some support for 14.4-14.8 as well, but I recommend doing your own research on this tool before using it)
   3. [Taurine](https://taurine.app/) iPhone SE to iPhone 12(s) on iOS 11.0-14.3 (alternative to unc0ver)
+  4. [palera1n](https://palera.in/) Successor to checkra1n, supports devices with A8 to A11 on iOS 15 and higher. This also supports iPadOS 17 on 6th/7th generation iPads. If you get an iPad for jailbreaking purposes, I recommend getting a 7th generation one.
 * Familiarity with the ObjC programming language.
 
 Personally, I will be using an iPhone 12 Mini on iOS 14.5.1 throughout this guide jailbroken with unc0ver (Fugu14).
@@ -98,15 +100,18 @@ Personally, I will be using an iPhone 12 Mini on iOS 14.5.1 throughout this guid
 ## Tools
 
 At various points in this guide, I'll be using different tools in order to extract useful information during the reversing process. I recommend you get the following tools set up prior to starting the guide:
+
 1. [jtool2](http://newosxbook.com/tools/jtool.html), otool alternative and info dumping for Mach-O files.
-2. [apfs-fuse](https://github.com/sgan81/apfs-fuse), hdiutil alternative for Linux users.
 2. [DyldExtractor](https://github.com/arandomdev/DyldExtractor), tool used to extract Frameworks from the dyld_shared_cache
-3. [Ghidra](https://github.com/NationalSecurityAgency/ghidra), disassembler. 
-4. [Frida](https://frida.re/), this allows dynamic instrumentation and will require a jailbroken device for our purposes.
+3. [apfs-fuse](https://github.com/sgan81/apfs-fuse), hdiutil alternative for Linux users.
+4. [Ghidra](https://github.com/NationalSecurityAgency/ghidra), disassembler.
+5. [Frida](https://frida.re/), this allows dynamic instrumentation and will require a jailbroken device for our purposes.
+
+It is worth noting that [ipsw](https://github.com/blacktop/ipsw) provides the functionality of the first two tools.
 
 ## Basics of iOS
 
-In this section, you'll find the basic information needed to get through the guide. I also cover certain topics that I've found useful over the course of my (short) career and as such, I encourage you to dig deeper into the topic when possible. Before I start covering this information, it's important to keep in mind most of this can be found with a Google search, man page lookup or even looking at Apple documentation. 
+In this section, you'll find the basic information needed to get through the guide. I also cover certain topics that I've found useful over the course of my (short) career and as such, I encourage you to dig deeper into the topic when possible. Before I start covering this information, it's important to keep in mind most of this can be found with a Google search, man page lookup or even looking at Apple documentation.
 
 ### Mach-O Files
 
@@ -152,16 +157,31 @@ The documentation on dispatch queues can be found [here](https://developer.apple
 
 In iOS 8.0, the SDK stopped including frameworks in favor of a massive cache called the [dyld shared cache](https://iphonedev.wiki/index.php/Dyld_shared_cache). This file is extremely important as it gives us a binary that can be analyzed in order to figure out how things work under the hood. While I don't recommend analyzing this file as a whole, it is possible and Ghidra can ingest it (this will take an extremely long time).
 
-#### Extracting the Dyld Shared Cache
+### Sourcing Libraries
 
-The iPhoneDevWiki covers how to extract the dyld cache from both a device and an ipsw [here](https://iphonedev.wiki/index.php/Dyld_shared_cache#Obtaining_a_shared_cache).
+All of the commands in this section have the option to add a `--output /path/to/output` flag to keep things organized.
 
-#### Extracting Frameworks
+#### Download the IPSW
 
-In order to extract a framework (we'll cover why this is useful in the frameworks sub-section), you can use a tool called `DyldExtractor`. I've noticed the usage for this tool change over the short period of time that I've used it. As such, I'll leave the usage of it to its own documentation which can be found in its Github Repo's README.md [here](https://github.com/arandomdev/DyldExtractor).
+The `ipsw` tool allows you to downlo an IPSW using the following command:
+```ipsw download ipsw -d iPhone13,1 -v 14.5.1```
 
-It is worth noting that at the time of writing, the `DyldExtractor` tool only supports up to iOS 14 `dyld_shared_cache`s as well as `jtool2` having some limited support. However, I find `DylDExtractor` is much more reliable and I recommend using it. I'll update this guide once I have a chance to look into iOS 15, but I'm currently (patiently, without harrassing the developers) for a jailbreak before looking into it.
-<!--TODO: Include iOS 15 option/confirm DyldExtractor works--> 
+#### Extract the Dyld Shared Cache
+
+Once downloaded, you'll want to extract the dyld shared cache:
+
+```ipsw extract -d iPhone13,1_14.5.1_18E212_Restore.ipsw```
+
+It is worth noting I couldn't get this step working on Linux due to `ipsw` complaining about `apfs-fuse` not being found in the path despite it being there. I'm not really looking to get a Linux setup going, but this goes to show how much easier iOS/macOS reversing is when you have a macOS computer. If you want to continue following along the guide, you'll either need a macOS computer or you'll need to find an alternative method for extracting the shared cache from the IPSW.
+
+#### Extracting Libraries
+
+You can extract a particular library as such:
+`ipsw dsc macho 18E212__iPhone13,1/dyld_shared_cache_arm64e -e libAFC.dylib`
+
+If you're on macOS, you should also be able to extract all libraries at once using:
+`ipsw dsc split 18E212__iPhone13,1/dyld_shared_cache_arm64e`
+
 
 <a id="ents_codesign"></a>
 
@@ -174,6 +194,7 @@ In order for an executable to be permitted to execute in iOS, it must be codesig
 In order to dump entitlements you can use either options below:
 1. `jtool2 --ent /path/to/executable` (you can pass the `-v` argument in order to get a more human readable output);
 2. `ldid2 -e /path/to/executable`.
+3. `ipsw macho info -e /path/to/executable`
 
 #### Signing Entitlements
 
@@ -181,7 +202,7 @@ If you want to execute a binary on a jailbroken device, you can do so by using y
 1. `jtool2 --sign --ent /path/to/entitlements/xml /path/to/executable`
 2. `ldid2 -S/path/to/entitlements.xml /path/to/executable`
 
-Both `jtool2` and `ldid2` are really reliable in my opinion and for those on OSX, you can use the `codesign` command. I don't really have much experience with it, but I have seen some people prefer it. I just don't find it as intuitive as `jtool2` or `ldid2`.
+Both `jtool2` and `ldid2` are really reliable in my opinion and for those on OSX, you can use the `codesign` command. I don't really have much experience with it, but I have seen some people prefer it. I just don't find it as intuitive as `jtool2` or `ldid2`. `ipsw` also has this functionality.
 
 ### Frameworks
 
@@ -201,7 +222,6 @@ Finally, before we get started with ghidra, I'd like to cover a more practical t
 
 I don't believe any more detail is necessary for this, as finding a file is just as you would for any other filesystem but I will be covering more about the ssh aspect of jailbroken devices when I get to writing part two of the guide covering [Frida](#instrumentation-using-frida).
 
-<!-- fight me on this id name bruh. -->
 <a id="anal_of_mach_o"></a>
 
 ## Preliminary Analysis of Mach-O Files
@@ -209,6 +229,7 @@ I don't believe any more detail is necessary for this, as finding a file is just
 Now that the basics have been covered, let's get started with reversing our targets. While this step is optional, I personally do this step as it allows me to make an intuitive guess as to whether or not this file is worth looking into or not. Quite often, the first file you look into starts a rabit hole that brings you to a private framework or library which contains what you're truly looking for.
 
 These are the first steps I take when it comes to analyzing a Mach-O file:
+
 1. List out the library dependencies (See the [Listing Frameworks](#listing-frameworks) section above). This provides us basic information as to what libraries or frameworks are being used.
 2. List out the symbols, this is straightforward, a simple `nm` (on macOS) or you can use `jtool2 -S /path/to/executable`. Various information can be extracted during this step:
     * The function names are stripped/obfuscated, this gets me prepared to know how "fun" the reversing will be.
@@ -222,6 +243,7 @@ These are the first steps I take when it comes to analyzing a Mach-O file:
 Now that we've covered some basic information, it's about time we start a practical example and go over the reversing process using Ghidra. For this guide, I've picked to reverse a system daemon called `afcd`. The reason I picked this daemon is because it's not obfuscated and relatively small making it an optimal target for a beginner to start with. It also doesn't have any open source code (that I could find), so the only way to learn more about its internals will be to reverse engineer it. It is worth noting that due to it being unobfuscated, the reversing process will be extremely straightforward and unlikely to require looking at actual opcodes and we'll mostly be looking over the pseudo-C code Ghidra generates.
 
 Before we begin, I'll be going into detail on how you can source your files for reverse engineering. When it comes to system files, we have two ways of doing so:
+
 1. Extracting from an ipsw
 2. Pulling from a physical device
 
@@ -1510,7 +1532,7 @@ _You can use other arguments such as `-m` for ObjC calls and I usually do `-m *[
 ## Credits
 
 While I doubt anyone here would care about credit, I'd like to thank the following:
-1. Apple
+1. Apple (despite making this entire process harder than it has to be)
 2. Jonathan Levin
 3. The Jailbreak Developers (I feel bad just group all of you under one entity, I truly do appreciate you and the work you do :heart:)
 4. The iPhoneDevWiki maintainers.
