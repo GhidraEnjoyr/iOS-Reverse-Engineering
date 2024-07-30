@@ -60,17 +60,20 @@
 
 ## Disclaimer
 
-Before you start reading, just know the goal of this guide is purely educational and this was done in my spare time. This guide is not an end-all-be-all to reverse engineering and I strongly encourage you to find the techniques that work best for you. This is also a bit dated, a lot of the tools used have a better alternative [ipsw](https://github.com/blacktop/ipsw) which I strongly recommend you look into.
+Before you start reading, just know the goal of this guide was to help streamline learning the process of reverse engineering on iOS. Unfortunately, re-uploading it escaped my mind so it's become quite out of date. I still believe the content is still useful from a "what do I need to do the thing" point of view so I've updated some sections to use more modern tooling. Unfortunately this resulted undermining an original goal I had which was to avoid depending on having a computer capable of running macOS.
 
-If you're interested, you can follow me on Twitter [@ghidra_enjoyer](twitter.com/ghidra_enjoyer), I might revisit this guide using more recent information.
+It is worth noting that there's plenty of macOS virtualization options out there, most notably I know I was able to get [OSX-KVM](https://github.com/kholia/OSX-KVM) working to run macOS Sanoma 14.5 from Ubuntu which can be used to source the libraries from.
+
+If I end up revisiting this idea and modernizing the process, you can follow me on Twitter [@ghidra_enjoyer](twitter.com/ghidra_enjoyer) where I'm sure I'll post something about it.
 
 ## Introduction
 
 Before I begin, I would like to officially welcome you to iOS reverse engineering. In this guide, I'll be covering the following main topics:
+
 * Basics of iOS;
 * Preliminary Analysis of Mach-O Files;
 * Static Analysis with Ghidra;
-* Dynamic Instrumentation using Frida. (WIP)
+* Dynamic Instrumentation using Frida (~~WIP~~ Incomplete, this will not be completed).
 
 Furthermore, the purpose of this guide is intended to be used by beginners to get into iOS reverse engineering and seeing how the various tools can be used. This is not an arm reversing guide or an exploitation course, but rather a resource to be used for figuring out things on your own. All I've done is compiled the basic tools to get you started.
 
@@ -1534,6 +1537,7 @@ _You can use other arguments such as `-m` for ObjC calls and I usually do `-m *[
 While I doubt anyone here would care about credit, I'd like to thank the following:
 1. Apple (despite making this entire process harder than it has to be)
 2. Jonathan Levin
-3. The Jailbreak Developers (I feel bad just group all of you under one entity, I truly do appreciate you and the work you do :heart:)
+3. The Jailbreak Developers (Thank you for taking the time for developing jailbreaks, it's what let me get started :heart:)
 4. The iPhoneDevWiki maintainers.
 5. The NSA (Ghidra is great)
+6. Blacktop ([@blacktop__](twitter.com/blacktop__))
