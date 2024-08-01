@@ -92,6 +92,7 @@ The prerequisites for this guide are quite simple really, you'll need the follow
   2. [unc0ver](https://unc0ver.dev/) iPhone SE to iPhone 12(s) on iOS 11.0-14.3 (wide net range) (There's some support for 14.4-14.8 as well, but I recommend doing your own research on this tool before using it)
   3. [Taurine](https://taurine.app/) iPhone SE to iPhone 12(s) on iOS 11.0-14.3 (alternative to unc0ver)
   4. [palera1n](https://palera.in/) Successor to checkra1n, supports devices with A8 to A11 on iOS 15 and higher. This also supports iPadOS 17 on 6th/7th generation iPads. If you get an iPad for jailbreaking purposes, I recommend getting a 7th generation one.
+  5. [Dopamine](https://ellekit.space/dopamine/) Jailbreak for arm64e devices running iOS 15.0 -16.5.1 (also supports up to iOS 16.6.1 for arm64, personally I find palera1n easier to install for those devices).
 * Familiarity with the ObjC programming language.
 
 Personally, I will be using an iPhone 12 Mini on iOS 14.5.1 throughout this guide jailbroken with unc0ver (Fugu14).
@@ -385,7 +386,9 @@ jtool2 -S afcd
                  U _xpc_transaction_begin
                  U _xpc_transaction_end
 ```
+
 At a first glance, we notice these are all unlinked and will be loaded during the runtime. However, we can already see some interesting symbols:
+
 * `_sandbox_init` which makes me believe it will want to create a sandbox.
 * `_xpc_connection_create_mach_service` which makes me believe it handles XPC requests.
 * `_dispatch_queue_create` Performs some sort asynchronous looping activity. My guess is this mostly for the XPC services.
@@ -881,14 +884,18 @@ It's best to look for the `main` function. The odd thing you might've noticed by
 #### Renaming the `entry` Symbol
 
 You'll notice that your Disassembler view and the Decompiler view both jumped to it. Now, in the Decompiler view, we'll want to rename
+
 ```C
 undefined8 entry(undefined8 param_1, undefined8 param_2)
-``` 
+```
+
 to
+
 ```C
 // We don't rename it to `char* const argv[]` because ghidra can't process it, so we'll just treat it as we would treat a double pointer. 
 undefined8 entry(int argc, char** argv)
 ```
+
 To do this, we just right-click on the function and select "Edit Function Signature". This will make the following window pop up and you can directly edit it in the text box:
 
 ![Image Not Found](Images/EditFuncName.png)
@@ -900,6 +907,7 @@ At this point, you might be wondering how did I know this was the main function.
 We notice that this is an infinite loop, so, we should probably look into the conditions that get us out of it.
 
 Let's reverse this portion of the code:
+
 ```C
 // Infinite loop, we'll go step by step here.
 while( true ) {
@@ -922,6 +930,7 @@ The first thing we want to check is what's the default value of `PTR_DAT_1000080
 ![Image Not Found](Images/PTR_DAT_100008000.png)
 
 According to the `man` page for `getopt(3)`, we should be expecting a pointer to the following struct to be passed:
+
 ```C
 struct option
 {
@@ -931,6 +940,7 @@ struct option
   int         val;
 };
 ```
+
 Assuming that `PTR_DAT_100008000->flag` is `NULL`, we should be expecting `PTR_DAT_100008000.val` to be our return value. As such, I'm quite interested in the `0x72` value, which is also the ascii value for 'r', which means, the if statement is only triggered if anything but "-r" is passed. Let's see what `FUN_100002990()` does when it's called:
 
 ![Image Not Found](Images/FUN_100002990.png)
@@ -1157,6 +1167,7 @@ As such, we know that it's initializing a listener Mach service. We could have e
 #### Looking at Code Blocks
 
 In this part of the code, it's creating a code block. The reason I know this is that it's a common pattern and according to the [block implementation specifications](https://clang.llvm.org/docs/Block-ABI-Apple.html), a code block is defined as the following structure:
+
 ```C
 struct Block_literal_1 {
     void *isa; // initialized to &_NSConcreteStackBlock or &_NSConcreteGlobalBlock
@@ -1226,6 +1237,7 @@ Let's look into `FUN_100002abc`:
 ##### Code Block Arguments
 
 From a quick glance, we know we won't need to go into much detail, however, I'd like to point your attention to a small difference:
+
 ```C
 // Here, we can make an assumption that this parameter will be passed whenever the event is triggered. The code block structure I included in the guide puts this as a simple comment, but the subsequent values are passed as arguments.
 local_30 = param_2;
@@ -1304,6 +1316,7 @@ LAB_10000309c:
       __auth_stubs::_exit(1);
     }
 ```
+
 So, what we know at this point is that it creates some sort of dictionary and passes it to a `lockdown_*` API to do what I assume is some sort of sanitation or validation. If successful, it will return some sort of string which gets extracted. Unfortunately, I wasn't able to find out exactly what they do via Googling, but let's continue in our function to see if we can figure it out via the context:
 
 ![Image Not Found](Images/FUN_100002c34_p2.png)
@@ -1417,7 +1430,8 @@ Interestingly enough, it seems to check if some attribute is not some empty stri
 I was somewhat correct, it seems like it just handles errors or unexpected xpc connections which then get canceled.
 
 At this point, it seems like we'll need to figure out what the `sandbox_*` and `lockdown_*` APIs do as well as looking at the `libafc.dylib` to see what the `AFC*` APIs do. Let's look at the dependencies once more to see where we might find them:
-```
+
+```no-highlight
 /System/Library/PrivateFrameworks/MobileKeyBag.framework/MobileKeyBag (compatibility version 1.0.0, current version 1.0.0)
 /usr/lib/liblockdown.dylib (compatibility version 1.0.0, current version 1.0.0)
 /usr/lib/libafc.dylib (compatibility version 1.0.0, current version 1.0.0)
@@ -1425,11 +1439,13 @@ At this point, it seems like we'll need to figure out what the `sandbox_*` and `
 /System/Library/Frameworks/IOKit.framework/Versions/A/IOKit (compatibility version 1.0.0, current version 275.0.0)
 /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1292.100.5)
 ```
+
 We'll probably find the `lockdown_*` APIs in `/usr/lib/liblockdown.dylib`, the `AFC*` APIs in `/usr/lib/libafc.dylib` and as for the `sandbox_*` APIs, I'd be hoping to find them somewhere along the road. However, going into these in this guide would be repetitive as you'd be simply looking for the symbols of interest in the APIs. As such, I'm going to leave the remainder of the reversing process as an exercise for the reader until I get around to diving deeper.
 
 ### Conclusions
 
 After going through this system daemon, I feel I can make the following conclusions:
+
 1. `afcd` provides some sort of Server/Client for obtaining files.
 2. The files being provided are most likely media files due to the initial root directory being "/private/var/mobile/Media". 
 3. This services are done via XPC calls, and as such, probably require certain entitlements. The specifics of this is most likely found by digging into `/usr/lib/libafc.dylib`.
@@ -1457,6 +1473,7 @@ While you're in Cydia, you'll probably also want to install `lldb` which can be 
 #### Setting up `iproxy`
 
 `iproxy` is an extremely useful tool when it comes to interacting with the device because it eliminates the need of establishing a network connection and all you need is to connect your iPhone via USB. In any case, the process for installing iproxy differs, personally, on Ubuntu, I did the following:
+
 1. Installed [libimobiledevice-glue](https://github.com/libimobiledevice/libimobiledevice-glue) (some reason it wasn't available on apt).
 2. Installed [usbmuxd](https://github.com/libimobiledevice/usbmuxd)
 3. Installed `libusbmuxd-tools` using `sudo apt install libusbmuxd-tools`
@@ -1528,16 +1545,18 @@ _I've ran into some issues during the writing of this section and the following 
 In any case, let's try to look into the `lockdown_*` API calls we originally saw in the `afcd` executable. To do so, we'll want to using the following CLI command:
 `frida-trace -U -n afcd -i "*lockdown*"`
 
-What this will do is it will attach to afcd (inject) and try to trace all the (C) functions with the string "lockdown" in it. This will create a directory containing a file for each function it finds in afcd matching these criteria.  This should generate a `__handlers__` directory containing the libraries (remember when we listed library dependencies) along with generated code for running code on the entry and exit of the functions matching the criteria we set out.
+What this will do is it will attach to afcd (inject) and try to trace all the (C) functions with the string "lockdown" in it. This will then create a directory (`__handlers__`) containing a directory for each imported library (recall we covered how to list those) with files defining files containing generated code hooking the functions matching the pattern.
 
 _You can use other arguments such as `-m` for ObjC calls and I usually do `-m *[Class Method]` where I'll use the same fuzzy pattern that I used for `*lockdown*`. At this point, you can print the args, just keep in mind args is just the `pc` pointer and not an actual array. The length is undefined so you need to know how to figure out the arguments where header dumps or even ghidra reversing comes in play. You can also read the return value which is what makes `frida-trace` such an easy way to get started._
 
 ## Credits
 
 While I doubt anyone here would care about credit, I'd like to thank the following:
-1. Apple (despite making this entire process harder than it has to be)
-2. Jonathan Levin
-3. The Jailbreak Developers (Thank you for taking the time for developing jailbreaks, it's what let me get started :heart:)
-4. The iPhoneDevWiki maintainers.
-5. The NSA (Ghidra is great)
-6. Blacktop ([@blacktop__](twitter.com/blacktop__))
+
+* Apple (despite making this entire process harder than it has to be)
+* Jonathan Levin
+* The Jailbreak Developers (Thank you for taking the time for developing jailbreaks, it's what let me get started :heart:)
+* The iPhoneDevWiki maintainers.
+* The NSA (Ghidra is great)
+* Blacktop ([@blacktop__](twitter.com/blacktop__))
+* Ole André Vadla Ravnås ([@oleavr](twitter.com/olveavr)), author of Frida
