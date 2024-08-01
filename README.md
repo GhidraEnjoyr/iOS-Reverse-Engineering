@@ -64,7 +64,7 @@ Before you start reading, just know the goal of this guide was to help streamlin
 
 It is worth noting that there's plenty of macOS virtualization options out there, most notably I know I was able to get [OSX-KVM](https://github.com/kholia/OSX-KVM) working to run macOS Sanoma 14.5 from Ubuntu which can be used to source the libraries from.
 
-If I end up revisiting this idea and modernizing the process, you can follow me on Twitter [@ghidra_enjoyer](twitter.com/ghidra_enjoyer) where I'm sure I'll post something about it.
+If I end up revisiting this idea and modernizing the process, you can follow me on Twitter [@ghidra_enjoyer](https://twitter.com/ghidra_enjoyer) where I'm sure I'll post something about it.
 
 ## Introduction
 
@@ -1558,5 +1558,5 @@ While I doubt anyone here would care about credit, I'd like to thank the followi
 * The Jailbreak Developers (Thank you for taking the time for developing jailbreaks, it's what let me get started :heart:)
 * The iPhoneDevWiki maintainers.
 * The NSA (Ghidra is great)
-* Blacktop ([@blacktop__](twitter.com/blacktop__))
-* Ole André Vadla Ravnås ([@oleavr](twitter.com/olveavr)), author of Frida
+* Blacktop ([@blacktop__](https://twitter.com/blacktop__))
+* Ole André Vadla Ravnås ([@oleavr](https://twitter.com/olveavr)), author of Frida
