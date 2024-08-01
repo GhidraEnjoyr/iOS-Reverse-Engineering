@@ -1559,4 +1559,4 @@ While I doubt anyone here would care about credit, I'd like to thank the followi
 * The iPhoneDevWiki maintainers.
 * The NSA (Ghidra is great)
 * Blacktop ([@blacktop__](https://twitter.com/blacktop__))
-* Ole André Vadla Ravnås ([@oleavr](https://twitter.com/olveavr)), author of Frida
+* Ole André Vadla Ravnås ([@oleavr](https://twitter.com/oleavr)), author of Frida
